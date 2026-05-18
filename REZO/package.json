@@ -3,7 +3,7 @@
   "displayName": "REZO",
   "description": "Send and receive team messages inside your editor files — no sidebar, no panels.",
   "version": "1.0.1",
-  "publisher": "rezo-dev",
+  "publisher": "VimalHariHar",
   "engines": {
     "vscode": "^1.86.0"
   },
