@@ -4,7 +4,7 @@
   "description": "End-to-end encrypted team chat that hides in your editor — a disguised terminal, native review threads, no sidebar, no panels.",
   "version": "3.0.1",
   "publisher": "rezo-vkay-dev",
-  "icon": "images/REZO-Logo.jpeg",
+  "icon": "images/rezo-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Goldmauler/Ghost_Chat.git"
