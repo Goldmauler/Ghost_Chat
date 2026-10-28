@@ -1,0 +1,29 @@
+{
+  "//": "REZO Firebase Realtime Database security rules.",
+  "//1": "Deploy with:  firebase deploy --only database   (or paste into the Rules tab of the RTDB console).",
+  "//2": "REZO is end-to-end encrypted, so the database only ever holds ciphertext. These rules add defense in depth: they block reading the whole /rooms or /vaults tree (no enumeration/dumping), and only permit access to a specific room or vault whose unguessable id you already know. Room ids carry 80 bits of entropy; vault ids 80 bits.",
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$room": {
+        ".read": "$room.matches(/^REZO-[A-F0-9]{20}$/)",
+        ".write": "$room.matches(/^REZO-[A-F0-9]{20}$/)",
+        "lastActivity": { ".validate": "newData.isNumber()" },
+        "messages": {
+          "$msg": {
+            ".validate": "newData.hasChildren(['ct', 'timestamp'])",
+            "ct": { ".validate": "newData.isString() && newData.val().length < 20000" },
+            "timestamp": { ".validate": "newData.isNumber()" }
+          }
+        }
+      }
+    },
+    "vaults": {
+      "$vault": {
+        ".read": "$vault.matches(/^V-[A-F0-9]{20}$/)",
+        ".write": "$vault.matches(/^V-[A-F0-9]{20}$/)"
+      }
+    }
+  }
+}

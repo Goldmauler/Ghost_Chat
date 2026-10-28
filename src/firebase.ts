@@ -1,35 +1,9 @@
 import * as https from 'https';
 import * as http from 'http';
 import * as vscode from 'vscode';
-import { GhostMessage } from './messageStore';
+import { FIREBASE_CONFIG, FirebaseConfig } from './config';
 
-// ---------------------------------------------------------------------------
-// Config helpers
-// ---------------------------------------------------------------------------
-
-export interface FirebaseConfig {
-  apiKey?: string;
-  authDomain?: string;
-  databaseURL?: string;
-  projectId?: string;
-  storageBucket?: string;
-  messagingSenderId?: string;
-  appId?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Built-in Firebase config — users don't need to configure anything.
-// Everyone who installs REZO shares this same Firebase backend.
-// ---------------------------------------------------------------------------
-const BUILT_IN_CONFIG: FirebaseConfig = {
-  apiKey: 'AIzaSyClCzypuFujzHjdnqAatT1A2C_D6DLWWPU',
-  authDomain: 'rezo-7f0d0.firebaseapp.com',
-  databaseURL: 'https://rezo-7f0d0-default-rtdb.firebaseio.com',
-  projectId: 'rezo-7f0d0',
-  storageBucket: 'rezo-7f0d0.firebasestorage.app',
-  messagingSenderId: '737617221120',
-  appId: '1:737617221120:web:f21df43b10917b3da02ae5'
-};
+export type { FirebaseConfig };
 
 /**
  * Return Firebase config.
@@ -41,13 +15,10 @@ export function getFirebaseConfig(): FirebaseConfig {
     .getConfiguration('rezo')
     .get<FirebaseConfig>('firebaseConfig');
 
-  // Use user config only if they've supplied a databaseURL
   if (userConfig && typeof userConfig === 'object' && userConfig.databaseURL) {
     return userConfig;
   }
-
-  // Fall back to built-in shared config
-  return BUILT_IN_CONFIG;
+  return FIREBASE_CONFIG;
 }
 
 /**
@@ -68,7 +39,8 @@ export function getDatabaseUrl(): string {
 function request(
   method: string,
   url: string,
-  body?: unknown
+  body?: unknown,
+  redirectsLeft = 3
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
@@ -93,15 +65,31 @@ function request(
     };
 
     const req = lib.request(options, (res) => {
+      const status = res.statusCode ?? 0;
+
+      // Follow Firebase regional-endpoint redirects so a 307 doesn't silently
+      // return a null body that the caller mistakes for "no data."
+      if ([301, 302, 307, 308].includes(status) && res.headers.location && redirectsLeft > 0) {
+        res.resume(); // drain to free socket
+        resolve(request(method, res.headers.location, body, redirectsLeft - 1));
+        return;
+      }
+
       let data = '';
       res.on('data', (chunk: Buffer) => {
         data += chunk.toString();
       });
       res.on('end', () => {
+        if (status >= 400) {
+          // Surface the real error so silent send/receive failures stop hiding.
+          const snippet = data.slice(0, 200);
+          reject(new Error(`Firebase ${method} ${parsedUrl.pathname} → HTTP ${status}: ${snippet}`));
+          return;
+        }
         try {
           resolve(JSON.parse(data));
         } catch {
-          // Firebase DELETE returns empty body; null is fine
+          // Firebase DELETE / empty PUT return empty body; null is fine
           resolve(null);
         }
       });
@@ -110,6 +98,7 @@ function request(
     req.on('error', (err: Error) => {
       reject(new Error(`REZO: Network error — ${err.message}`));
     });
+    req.setTimeout(15_000, () => req.destroy(new Error('request timed out')));
 
     if (bodyStr) {
       req.write(bodyStr);
@@ -158,39 +147,11 @@ export async function firebaseDelete(path: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Domain-level operations
+// Room lifecycle operations
+//
+// Note: message send/fetch live in messageStore.ts because they encrypt the
+// payload first. This module stays a thin, secret-free REST layer.
 // ---------------------------------------------------------------------------
-
-/**
- * Fetch all messages for a room, sorted by timestamp ascending.
- */
-export async function getMessages(roomCode: string): Promise<GhostMessage[]> {
-  const raw = (await firebaseGet(
-    `rooms/${roomCode}/messages`
-  )) as Record<string, GhostMessage> | null;
-
-  if (!raw || typeof raw !== 'object') {
-    return [];
-  }
-
-  const messages: GhostMessage[] = Object.values(raw).filter(
-    (m): m is GhostMessage =>
-      m !== null &&
-      typeof m === 'object' &&
-      typeof m.timestamp === 'number'
-  );
-
-  messages.sort((a, b) => a.timestamp - b.timestamp);
-  return messages;
-}
-
-/**
- * Send a message to a room. Also updates lastActivity.
- */
-export async function sendMessage(msg: GhostMessage): Promise<void> {
-  await firebasePost(`rooms/${msg.roomCode}/messages`, msg);
-  await setLastActivity(msg.roomCode);
-}
 
 /**
  * Get the lastActivity timestamp for a room (null if room doesn't exist).

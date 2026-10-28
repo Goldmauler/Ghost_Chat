@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run GhostChat Extension",
+      "name": "Run REZO Extension",
       "type": "extensionHost",
       "request": "launch",
       "args": [

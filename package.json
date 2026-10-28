@@ -1,14 +1,28 @@
 {
-  "name": "ghostchat",
-  "displayName": "GhostChat",
-  "description": "Simple LAN chat for VS Code with one-click host and connect setup.",
-  "version": "0.0.4",
-  "publisher": "GoldMauler",
+  "name": "rezo",
+  "displayName": "REZO",
+  "description": "End-to-end encrypted team chat that hides in your editor — a disguised terminal, native review threads, no sidebar, no panels.",
+  "version": "3.0.1",
+  "publisher": "rezo-vkay-dev",
+  "icon": "images/REZO-Logo.jpeg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Goldmauler/Ghost_Chat.git"
+  },
   "engines": {
     "vscode": "^1.86.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "team",
+    "chat",
+    "collaboration",
+    "messaging",
+    "review",
+    "comments",
+    "firebase"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -17,116 +31,234 @@
   "contributes": {
     "commands": [
       {
-        "command": "ghostchat.setSharedFilePath",
-        "title": "GhostChat: Set Shared File Path"
+        "command": "rezo.createRoom",
+        "title": "REZO: Create New Room"
       },
       {
-        "command": "ghostchat.quickSetup",
-        "title": "GhostChat: Quick Setup"
+        "command": "rezo.joinRoom",
+        "title": "REZO: Join Room by Invite"
       },
       {
-        "command": "ghostchat.createGroup",
-        "title": "GhostChat: Create New Group"
+        "command": "rezo.leaveRoom",
+        "title": "REZO: Leave Current Room"
       },
       {
-        "command": "ghostchat.joinGroup",
-        "title": "GhostChat: Join Group by ID"
+        "command": "rezo.openChat",
+        "title": "REZO: Open Chat"
       },
       {
-        "command": "ghostchat.showGroupsInLan",
-        "title": "GhostChat: Join Group from LAN List"
+        "command": "rezo.copyInvite",
+        "title": "REZO: Copy Room Invite"
       },
       {
-        "command": "ghostchat.listGroups",
-        "title": "GhostChat: List Groups"
+        "command": "rezo.panic",
+        "title": "REZO: Panic (Hide Everything)"
       },
       {
-        "command": "ghostchat.showSharedFilePath",
-        "title": "GhostChat: Show Shared File Path"
+        "command": "rezo.pinSelection",
+        "title": "REZO: Pin Selection to Thread"
       },
       {
-        "command": "ghostchat.debugSharedGroups",
-        "title": "GhostChat: Debug Shared Groups"
+        "command": "rezo.refreshThreads",
+        "title": "REZO: Refresh Threads"
       },
       {
-        "command": "ghostchat.refreshGroups",
-        "title": "GhostChat: Refresh Groups"
+        "command": "rezo.setDisplayName",
+        "title": "REZO: Set Display Name"
       },
       {
-        "command": "ghostchat.dumpSharedFile",
-        "title": "GhostChat: Open Shared File (inspect)"
+        "command": "rezo.askAI",
+        "title": "REZO: Ask AI"
       },
       {
-        "command": "ghostchat.deleteGroup",
-        "title": "GhostChat: Delete Group"
+        "command": "rezo.setAIKeys",
+        "title": "REZO: Set AI Keys (Gemini / DeepSeek / Groq)"
       },
       {
-        "command": "ghostchat.startHostShare",
-        "title": "GhostChat: Start Host Share (HTTP)"
+        "command": "rezo.saveToVault",
+        "title": "REZO: Save to Vault"
       },
       {
-        "command": "ghostchat.stopHostShare",
-        "title": "GhostChat: Stop Host Share (HTTP)"
+        "command": "rezo.openVault",
+        "title": "REZO: Open Vault"
       },
       {
-        "command": "ghostchat.connectToHost",
-        "title": "GhostChat: Connect to Host"
+        "command": "rezo.showSlashCommands",
+        "title": "REZO: Show AI Slash Commands"
       },
       {
-        "command": "ghostchat.disconnectFromHost",
-        "title": "GhostChat: Disconnect from Host"
+        "command": "rezo.replyThread",
+        "title": "REZO: Reply"
       },
       {
-        "command": "ghostchat.setActiveGroup",
-        "title": "GhostChat: Set Active Group"
-      },
-      {
-        "command": "ghostchat.showCurrentGroup",
-        "title": "GhostChat: Show Current Group"
-      },
-      {
-        "command": "ghostchat.sendMessage",
-        "title": "GhostChat: Send Selected Text"
-      },
-      {
-        "command": "ghostchat.insertHistory",
-        "title": "GhostChat: Insert Group History"
-      },
-      {
-        "command": "ghostchat.setSenderName",
-        "title": "GhostChat: Set Sender Name"
+        "command": "rezo.showChatHistory",
+        "title": "REZO: Show Chat History"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "rezo.replyThread",
+          "when": "false"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "rezo.replyThread",
+          "group": "inline",
+          "when": "commentController == rezo"
+        }
+      ]
+    },
     "keybindings": [
       {
-        "command": "ghostchat.sendMessage",
-        "key": "ctrl+shift+s",
-        "when": "editorTextFocus && !editorReadonly"
+        "command": "rezo.openChat",
+        "key": "ctrl+alt+;",
+        "mac": "cmd+alt+;"
       },
       {
-        "command": "ghostchat.insertHistory",
-        "key": "ctrl+shift+v",
-        "when": "editorTextFocus && !editorReadonly"
+        "command": "rezo.panic",
+        "key": "ctrl+alt+0",
+        "mac": "cmd+alt+0"
+      },
+      {
+        "command": "rezo.pinSelection",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "rezo.askAI",
+        "key": "ctrl+shift+q",
+        "mac": "cmd+shift+q",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "rezo.saveToVault",
+        "key": "ctrl+alt+b",
+        "mac": "cmd+alt+b",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "rezo.openVault",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b"
+      },
+      {
+        "command": "rezo.showChatHistory",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h"
       }
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/GoldMauler/ghostchat.git"
+    ],
+    "configuration": {
+      "title": "REZO",
+      "properties": {
+        "rezo.chatDisguise": {
+          "type": "string",
+          "enum": [
+            "node",
+            "bash",
+            "zsh",
+            "python",
+            "powershell"
+          ],
+          "default": "node",
+          "markdownDescription": "What the chat terminal is disguised as. The terminal tab name and prompt mimic this shell/REPL so the chat blends into normal terminal work."
+        },
+        "rezo.notify": {
+          "type": "string",
+          "enum": [
+            "silent",
+            "toast"
+          ],
+          "default": "silent",
+          "markdownDescription": "How new messages are announced. `silent` (default) shows only the status-bar unread count and the chat terminal — best for staying discreet. `toast` also pops a notification."
+        },
+        "rezo.roomExpiry": {
+          "type": "string",
+          "enum": [
+            "5m",
+            "35m",
+            "1h",
+            "4h",
+            "24h",
+            "7d",
+            "never"
+          ],
+          "default": "24h",
+          "markdownDescription": "How long a room stays alive after its last activity. `never` keeps it forever (use with care — Firebase storage is shared)."
+        },
+        "rezo.firebaseConfig": {
+          "type": "object",
+          "description": "Optional: override the built-in Firebase backend with your own project.",
+          "properties": {
+            "apiKey": {
+              "type": "string"
+            },
+            "authDomain": {
+              "type": "string"
+            },
+            "databaseURL": {
+              "type": "string"
+            },
+            "projectId": {
+              "type": "string"
+            },
+            "storageBucket": {
+              "type": "string"
+            },
+            "messagingSenderId": {
+              "type": "string"
+            },
+            "appId": {
+              "type": "string"
+            }
+          },
+          "default": {}
+        },
+        "rezo.geminiApiKey": {
+          "type": "string",
+          "description": "Gemini API key. Get free at https://aistudio.google.com/apikey. Prefer 'REZO: Set AI Keys' command (secure storage).",
+          "default": ""
+        },
+        "rezo.deepseekApiKey": {
+          "type": "string",
+          "description": "DeepSeek API key (fallback if Gemini rate limited). Get free at https://platform.deepseek.com.",
+          "default": ""
+        },
+        "rezo.groqApiKey": {
+          "type": "string",
+          "description": "Groq API key (fallback if DeepSeek rate limited). Get free at https://console.groq.com/keys.",
+          "default": ""
+        },
+        "rezo.geminiModel": {
+          "type": "string",
+          "default": "gemini-flash-latest",
+          "description": "Gemini model id for Ask AI. The default alias always points at Google's current Flash model."
+        },
+        "rezo.deepseekModel": {
+          "type": "string",
+          "default": "deepseek-chat",
+          "description": "DeepSeek model id for Ask AI."
+        },
+        "rezo.groqModel": {
+          "type": "string",
+          "default": "llama-3.1-8b-instant",
+          "description": "Groq model id for Ask AI. Change this if Groq retires the default (see console.groq.com/docs/models)."
+        }
+      }
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "vscode:prepublish": "npm run compile"
-  },
-  "dependencies": {
-    "ws": "^8.18.0"
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@types/vscode": "^1.86.0",
-    "@types/node": "^18.0.0",
-    "@types/ws": "^8.5.10",
-    "@vscode/vsce": "^3.9.1",
-    "typescript": "^4.7.4"
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.3.3"
   }
 }

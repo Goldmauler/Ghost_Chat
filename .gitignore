@@ -6,3 +6,16 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Build artifacts
+*.vsix
+
+# Local secrets (Phase 1 prep — will move to proxy server)
+src/secrets.local.ts
+.env
+.env.local
+
+# Local-only docs (DEVELOPER_GUIDE contains an old API key) and drafts
+DEVELOPER_GUIDE.md
+blog/
+.claude/
