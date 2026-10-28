@@ -135,6 +135,7 @@ function httpsPost(
     });
 
     req.on('error', (err: Error) => reject(new Error(`Network error: ${err.message}`)));
+    req.setTimeout(60_000, () => req.destroy(new Error('request timed out')));
     req.write(body);
     req.end();
   });
@@ -158,7 +159,9 @@ export async function askGemini(prompt: string, apiKey: string, sys: string = SY
   const body = JSON.stringify({
     system_instruction: { parts: [{ text: sys }] },
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
+    // Current Gemini Flash models "think" before answering and those tokens
+    // count against maxOutputTokens, so 1024 could leave no room for the answer.
+    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
   });
 
   const model = modelSetting('geminiModel', GEMINI_MODEL);
@@ -166,7 +169,10 @@ export async function askGemini(prompt: string, apiKey: string, sys: string = SY
   const raw = await httpsPost(GEMINI_HOST, path, { 'x-goog-api-key': apiKey }, body);
 
   const parsed = JSON.parse(raw) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string; thought?: boolean }> };
+      finishReason?: string;
+    }>;
     error?: { message?: string; status?: string };
   };
 
@@ -175,8 +181,14 @@ export async function askGemini(prompt: string, apiKey: string, sys: string = SY
     throw new Error(isRateLimitError(msg) ? `RATE_LIMIT:${msg}` : msg);
   }
 
-  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('No response from Gemini');
+  const cand = parsed.candidates?.[0];
+  const text = (cand?.content?.parts ?? [])
+    .filter((p) => !p.thought && typeof p.text === 'string')
+    .map((p) => p.text)
+    .join('');
+  if (!text) {
+    throw new Error(`No response from Gemini${cand?.finishReason ? ` (${cand.finishReason})` : ''}`);
+  }
   return text.trim();
 }
 

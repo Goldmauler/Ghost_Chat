@@ -94,7 +94,7 @@ export async function activate(
     () => getSenderName(context),
     async (parent, content) => {
       const roomCode = getActiveRoom(context);
-      if (!roomCode || !activeKey) return;
+      if (!roomCode || !activeKey) return undefined;
       const git = getGitContext(parent.file);
       const reply: GhostMessage = {
         id: newId(),
@@ -109,6 +109,7 @@ export async function activate(
       };
       markSent(reply.id);
       await sendRoomMessage(reply, activeKey);
+      return reply;
     },
     outputChannel
   );

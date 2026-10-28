@@ -31,7 +31,7 @@ export class RezoCommentController {
 
   constructor(
     private readonly nameProvider: () => string,
-    private readonly sendReply: (parent: GhostMessage, content: string) => Promise<void>,
+    private readonly sendReply: (parent: GhostMessage, content: string) => Promise<GhostMessage | undefined>,
     private readonly logger: vscode.OutputChannel
   ) {
     this.controller = vscode.comments.createCommentController(
@@ -217,38 +217,20 @@ export class RezoCommentController {
     // Find the parent message: first message in the thread.
     const fileMap = this.findMapForThread(thread);
     if (!fileMap) return;
-    const [line, parentList] = fileMap;
+    const parentList = fileMap;
     if (parentList.length === 0) return;
     const parent = parentList[0];
-    await this.sendReply(parent, content.trim());
-    // Optimistic local append — gives instant feedback before SSE round-trip.
-    const optimistic: GhostMessage = {
-      id: `local-${Date.now()}`,
-      roomCode: parent.roomCode,
-      sender: this.nameProvider(),
-      content: content.trim(),
-      file: parent.file,
-      line: parent.line,
-      timestamp: Date.now(),
-      replyTo: parent.id
-    };
-    this.addMessage(optimistic);
-    void line; // silence unused
+    const sent = await this.sendReply(parent, content.trim());
+    // Local append for instant feedback. It carries the real message id, so
+    // the SSE echo of the same message is deduped instead of shown twice.
+    if (sent) this.addMessage(sent);
   }
 
-  private findMapForThread(
-    thread: vscode.CommentThread
-  ): [number, GhostMessage[]] | null {
-    for (const [, fileMap] of this.threadsByFile) {
+  private findMapForThread(thread: vscode.CommentThread): GhostMessage[] | null {
+    for (const [file, fileMap] of this.threadsByFile) {
       for (const [line, t] of fileMap) {
-        if (t === thread) {
-          // Find the bucket entry corresponding to this thread.
-          for (const [key, list] of this.bucket) {
-            const split = key.lastIndexOf(':');
-            if (split === -1) continue;
-            if (Number(key.slice(split + 1)) === line) return [line, list];
-          }
-        }
+        // Match on file AND line: two files can both have a thread on line 10.
+        if (t === thread) return this.bucket.get(`${file}:${line}`) ?? null;
       }
     }
     return null;

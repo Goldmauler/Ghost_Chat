@@ -66,8 +66,12 @@ export class SSESubscription {
   private connect(): void {
     if (this.stopped) return;
 
-    const base = getDatabaseUrl();
-    const url = new URL(`${base}/${this.path}.json`);
+    this.open(`${getDatabaseUrl()}/${this.path}.json`, 3);
+  }
+
+  private open(target: string, redirectsLeft: number): void {
+    if (this.stopped) return;
+    const url = new URL(target);
 
     const options: https.RequestOptions = {
       hostname: url.hostname,
@@ -80,54 +84,21 @@ export class SSESubscription {
     };
 
     this.req = https.request(options, (res) => {
-      // Handle redirects (Firebase sometimes redirects to a regional endpoint)
-      if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307) {
-        const location = res.headers.location;
-        if (location) {
-          this.followRedirect(location);
-          return;
-        }
+      // Firebase may redirect to a regional endpoint.
+      const status = res.statusCode ?? 0;
+      if ([301, 302, 307, 308].includes(status) && res.headers.location && redirectsLeft > 0) {
+        res.resume();
+        this.open(new URL(res.headers.location, url).href, redirectsLeft - 1);
+        return;
       }
 
-      if (res.statusCode !== 200) {
-        this.handleError(new Error(`SSE failed with status ${res.statusCode}`));
+      if (status !== 200) {
+        res.resume();
+        this.handleError(new Error(`SSE failed with status ${status}`));
         return;
       }
 
       this.retryCount = 0; // Reset retry count on successful connect
-      this.buffer = '';
-
-      res.setEncoding('utf8');
-      res.on('data', (chunk: string) => this.processChunk(chunk));
-      res.on('end', () => this.handleDisconnect());
-      res.on('error', (err) => this.handleError(err));
-    });
-
-    this.req.on('error', (err: Error) => this.handleError(err));
-    this.req.end();
-  }
-
-  private followRedirect(redirectUrl: string): void {
-    if (this.stopped) return;
-
-    const url = new URL(redirectUrl);
-    const options: https.RequestOptions = {
-      hostname: url.hostname,
-      path: url.pathname + url.search,
-      method: 'GET',
-      headers: {
-        Accept: 'text/event-stream',
-        'Cache-Control': 'no-cache'
-      }
-    };
-
-    this.req = https.request(options, (res) => {
-      if (res.statusCode !== 200) {
-        this.handleError(new Error(`SSE redirect failed: ${res.statusCode}`));
-        return;
-      }
-
-      this.retryCount = 0;
       this.buffer = '';
 
       res.setEncoding('utf8');

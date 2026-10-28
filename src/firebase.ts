@@ -98,6 +98,7 @@ function request(
     req.on('error', (err: Error) => {
       reject(new Error(`REZO: Network error — ${err.message}`));
     });
+    req.setTimeout(15_000, () => req.destroy(new Error('request timed out')));
 
     if (bodyStr) {
       req.write(bodyStr);
