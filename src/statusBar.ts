@@ -64,7 +64,7 @@ export class StatusBarManager {
       const lines: string[] = [];
       lines.push(`REZO — Active room: ${this.currentRoom}`);
       if (this.unreadCount > 0) {
-        lines.push(`${this.unreadCount} new message${this.unreadCount > 1 ? 's' : ''} — press Ctrl+Shift+V to read`);
+        lines.push(`${this.unreadCount} new message${this.unreadCount > 1 ? 's' : ''} — press Ctrl+Alt+; to read`);
       }
       if (this.onlineCount > 0) {
         const preview = this.onlineNames.slice(0, 8).join(', ');

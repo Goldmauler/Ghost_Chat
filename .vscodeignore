@@ -14,3 +14,7 @@ blog/**
 database.rules.json
 .claude/**
 images/REZO-Logo.jpeg
+scripts/**
+.github/**
+firebase.json
+.firebaserc

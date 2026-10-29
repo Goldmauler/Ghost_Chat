@@ -8,6 +8,7 @@ import {
   leaveRoom,
   getActiveRoom,
   getRoomKey,
+  migrateWorkspaceState,
 } from './roomManager';
 import { firebasePut } from './firebase';
 import {
@@ -52,6 +53,7 @@ export async function activate(
 ): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('REZO');
   outputChannel.appendLine('[REZO] Extension activating…');
+  await migrateWorkspaceState(context);
 
   const statusBar = new StatusBarManager();
   context.subscriptions.push({ dispose: () => statusBar.dispose() });
@@ -278,7 +280,7 @@ export async function activate(
 
     const notify = vscode.workspace
       .getConfiguration('rezo')
-      .get<string>('notify', 'silent');
+      .get<string>('notify', 'toast');
     if (notify === 'toast') {
       const preview = msg.content.length > 60 ? msg.content.slice(0, 60) + '…' : msg.content;
       void vscode.window.showInformationMessage(`REZO · ${msg.sender}: ${preview}`);
@@ -299,8 +301,16 @@ export async function activate(
 
   context.subscriptions.push({ dispose: stopRealtime });
 
-  // First-run nudge.
-  if (!storedRoom) {
+  const walkthroughId = `${context.extension.id}#rezo.getStarted`;
+  const openWelcome = () =>
+    vscode.commands.executeCommand('workbench.action.openWalkthrough', walkthroughId, false);
+
+  // First run: open the Getting Started walkthrough. Later runs without a
+  // room get the lighter nudge.
+  if (!context.globalState.get<boolean>('rezo.welcomeShown')) {
+    await context.globalState.update('rezo.welcomeShown', true);
+    void openWelcome();
+  } else if (!storedRoom) {
     void vscode.window
       .showInformationMessage(
         'REZO: No active room. Create one or join with an invite.',
@@ -319,6 +329,8 @@ export async function activate(
 
   const register = (id: string, fn: (...args: any[]) => any) =>
     context.subscriptions.push(vscode.commands.registerCommand(id, fn));
+
+  register('rezo.showWelcome', openWelcome);
 
   register('rezo.createRoom', async () => {
     const result = await createRoom(context, statusBar, outputChannel);
