@@ -1,7 +1,7 @@
+// REZO Firebase Realtime Database security rules.
+// Deploy with:  npx firebase-tools deploy --only database   (or paste into the Rules tab of the RTDB console).
+// REZO is end-to-end encrypted, so the database only ever holds ciphertext. These rules add defense in depth: they block reading the whole /rooms or /vaults tree (no enumeration/dumping), only permit access to a specific room or vault whose unguessable id you already know, and reject any field REZO does not write. Room ids carry 80 bits of entropy; vault ids 80 bits.
 {
-  "//": "REZO Firebase Realtime Database security rules.",
-  "//1": "Deploy with:  npx firebase-tools deploy --only database   (or paste into the Rules tab of the RTDB console).",
-  "//2": "REZO is end-to-end encrypted, so the database only ever holds ciphertext. These rules add defense in depth: they block reading the whole /rooms or /vaults tree (no enumeration/dumping), only permit access to a specific room or vault whose unguessable id you already know, and reject any field REZO does not write. Room ids carry 80 bits of entropy; vault ids 80 bits.",
   "rules": {
     ".read": false,
     ".write": false,
