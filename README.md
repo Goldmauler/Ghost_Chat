@@ -2,17 +2,25 @@
 
 > Chat with your team through a terminal that looks like an ordinary shell, or drop a note on any line as a native review thread. Every message is end-to-end encrypted. No sidebar, no chat bubbles, nothing that reads as "chatting" to someone glancing at your screen.
 
-[![Version](https://img.shields.io/badge/version-3.0.1-green)]()
+[![Version](https://img.shields.io/badge/version-3.1.0-green)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
+
+## What's new in 3.1
+
+- **Getting Started walkthrough** opens on install (reopen any time with **REZO: Getting Started**).
+- **Shortcuts no longer override VS Code's own** — Save As, Run Build Task, Replace in Files and the secondary sidebar work again. See the table below for the new keys.
+- **Your room follows you across folders and windows** — the active room and display name are now saved per machine, not per workspace.
+- **Abandoned rooms are deleted server-side** by an hourly cleanup job, using the expiry set by the room's creator.
+- New messages now show a short notification by default (`rezo.notify: silent` turns it off).
 
 ## What's new in 3.0
 
 - **Terminal chat — hidden in plain sight.** Open **REZO: Open Chat** (`Ctrl+Alt+;`) and a terminal appears, disguised as `node` / `bash` / `python` / `powershell`. Type a message like a command, press Enter to send. Incoming messages scroll in like command output. To anyone watching, it's just terminal work. No more select-text-and-shortcut dance.
 - **End-to-end encryption.** Messages, names, AI answers, and vault items are encrypted with AES-256-GCM on your machine. The room key lives only in the invite you share and in local secure storage — it never touches the server. The backend only ever holds ciphertext.
 - **Invite-based rooms.** Room codes are now 80-bit unguessable IDs, and the invite carries the decryption key. Share it privately.
-- **Panic key.** `Ctrl+Alt+0` instantly hides every REZO surface — closes the chat terminal and clears all threads.
+- **Panic key.** `Ctrl+Alt+H` instantly hides every REZO surface — closes the chat terminal and clears all threads.
 - **Native comment threads** for pinning a discussion to a specific line, and **presence** + **git context**, all still here.
 
 ---
@@ -31,9 +39,9 @@ No account. No Firebase setup. AI is optional and uses **your own** free API key
 
 ## The two ways to talk
 
-**Terminal chat (primary).** A disguised terminal for free-flowing conversation. Set the disguise with `rezo.chatDisguise`. New messages appear even when it's not focused; the status bar tracks the unread count.
+**Terminal chat (primary).** A disguised terminal for free-flowing conversation. Set the disguise with `rezo.chatDisguise`. New messages pop a short notification and the status bar tracks the unread count (set `rezo.notify` to `silent` to keep only the count).
 
-**Pinned threads (for code review).** Select code, `Ctrl+Shift+S`, add a note → it appears as a native comment thread on that exact line for teammates who open the file. Reply in-thread. Your source files are never modified.
+**Pinned threads (for code review).** Select code, `Ctrl+Alt+Shift+P`, add a note → it appears as a native comment thread on that exact line for teammates who open the file. Reply in-thread. Your source files are never modified.
 
 ---
 
@@ -42,12 +50,11 @@ No account. No Firebase setup. AI is optional and uses **your own** free API key
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+Alt+;` | Open / focus the chat terminal |
-| `Ctrl+Alt+0` | **Panic** — hide all REZO surfaces instantly |
-| `Ctrl+Shift+S` | Pin selection to a line thread |
+| `Ctrl+Alt+H` | **Panic** — hide all REZO surfaces instantly |
+| `Ctrl+Alt+Shift+P` | Pin selection to a line thread |
 | `Ctrl+Shift+Q` | Ask AI (answer inserted privately at cursor) |
-| `Ctrl+Alt+B` | Save selection to your encrypted Vault |
-| `Ctrl+Shift+B` | Open Vault |
-| `Ctrl+Shift+H` | Show full chat history |
+| `Ctrl+Alt+Shift+V` | Save selection to your encrypted Vault (no selection: open Vault) |
+| `Ctrl+Alt+Shift+R` | Show full chat history |
 
 ---
 
@@ -78,8 +85,8 @@ Slash commands (prefix a selection, then `Ctrl+Shift+Q`):
 
 Save snippets to a private cloud vault keyed by an unguessable per-install ID and encrypted with a key only your machine holds. Persists forever (unlike rooms).
 
-- `Ctrl+Alt+B` save selection
-- `Ctrl+Shift+B` browse / insert / delete
+- `Ctrl+Alt+Shift+V` with a selection: save it
+- `Ctrl+Alt+Shift+V` with nothing selected: browse / insert / delete
 
 ---
 
@@ -88,7 +95,7 @@ Save snippets to a private cloud vault keyed by an unguessable per-install ID an
 - **End-to-end encrypted** (AES-256-GCM). The Firebase backend stores only ciphertext plus routing metadata (timestamps, line numbers).
 - The room key never leaves your machine except inside the invite you deliberately share.
 - No AI keys are shipped — you supply your own, stored in VS Code SecretStorage.
-- Deploy [`database.rules.json`](./database.rules.json) to your Firebase project (`firebase deploy --only database`) for defense-in-depth: it blocks enumerating `/rooms` and `/vaults` and only permits access to a specific, unguessable ID.
+- Deploy [`database.rules.json`](./database.rules.json) to your Firebase project (`npx firebase-tools deploy --only database`) for defense-in-depth: it blocks enumerating `/rooms` and `/vaults` and only permits access to a specific, unguessable ID.
 
 > Treat the invite like a password. Anyone you send it to can read the room.
 

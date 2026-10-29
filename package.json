@@ -2,9 +2,9 @@
   "name": "rezo",
   "displayName": "REZO",
   "description": "End-to-end encrypted team chat that hides in your editor — a disguised terminal, native review threads, no sidebar, no panels.",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "publisher": "rezo-vkay-dev",
-  "icon": "images/REZO-Logo.jpeg",
+  "icon": "images/rezo-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Goldmauler/Ghost_Chat.git"
@@ -93,6 +93,10 @@
       {
         "command": "rezo.showChatHistory",
         "title": "REZO: Show Chat History"
+      },
+      {
+        "command": "rezo.showWelcome",
+        "title": "REZO: Getting Started"
       }
     ],
     "menus": {
@@ -118,36 +122,37 @@
       },
       {
         "command": "rezo.panic",
-        "key": "ctrl+alt+0",
-        "mac": "cmd+alt+0"
+        "key": "ctrl+alt+h",
+        "mac": "ctrl+alt+h"
       },
       {
         "command": "rezo.pinSelection",
-        "key": "ctrl+shift+s",
-        "mac": "cmd+shift+s",
-        "when": "editorTextFocus"
+        "key": "ctrl+alt+shift+p",
+        "mac": "cmd+alt+shift+p",
+        "when": "editorTextFocus && editorHasSelection"
       },
       {
         "command": "rezo.askAI",
         "key": "ctrl+shift+q",
-        "mac": "cmd+shift+q",
+        "mac": "ctrl+shift+q",
         "when": "editorTextFocus"
       },
       {
         "command": "rezo.saveToVault",
-        "key": "ctrl+alt+b",
-        "mac": "cmd+alt+b",
-        "when": "editorTextFocus"
+        "key": "ctrl+alt+shift+v",
+        "mac": "cmd+alt+shift+v",
+        "when": "editorTextFocus && editorHasSelection"
       },
       {
         "command": "rezo.openVault",
-        "key": "ctrl+shift+b",
-        "mac": "cmd+shift+b"
+        "key": "ctrl+alt+shift+v",
+        "mac": "cmd+alt+shift+v",
+        "when": "!editorTextFocus || !editorHasSelection"
       },
       {
         "command": "rezo.showChatHistory",
-        "key": "ctrl+shift+h",
-        "mac": "cmd+shift+h"
+        "key": "ctrl+alt+shift+r",
+        "mac": "cmd+alt+shift+r"
       }
     ],
     "configuration": {
@@ -171,8 +176,8 @@
             "silent",
             "toast"
           ],
-          "default": "silent",
-          "markdownDescription": "How new messages are announced. `silent` (default) shows only the status-bar unread count and the chat terminal — best for staying discreet. `toast` also pops a notification."
+          "default": "toast",
+          "markdownDescription": "How new messages are announced. `toast` (default) pops a short notification. `silent` shows only the status-bar unread count and the chat terminal — best for staying discreet."
         },
         "rezo.roomExpiry": {
           "type": "string",
@@ -247,7 +252,62 @@
           "description": "Groq model id for Ask AI. Change this if Groq retires the default (see console.groq.com/docs/models)."
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "rezo.getStarted",
+        "title": "Get started with REZO",
+        "description": "Encrypted chat with your team, without leaving the editor. Four steps, about a minute.",
+        "steps": [
+          {
+            "id": "createOrJoin",
+            "title": "1. Create or join a room",
+            "description": "A room is a private, end-to-end encrypted channel. Create one, or paste an invite a teammate sent you.\n[Create Room](command:rezo.createRoom)\n[Join with Invite](command:rezo.joinRoom)",
+            "media": {
+              "markdown": "media/walkthrough/room.md"
+            },
+            "completionEvents": [
+              "onCommand:rezo.createRoom",
+              "onCommand:rezo.joinRoom"
+            ]
+          },
+          {
+            "id": "invite",
+            "title": "2. Share the invite",
+            "description": "Copy the invite and send it privately — it holds the decryption key, so treat it like a password.\n[Copy Invite](command:rezo.copyInvite)",
+            "media": {
+              "markdown": "media/walkthrough/invite.md"
+            },
+            "completionEvents": [
+              "onCommand:rezo.copyInvite"
+            ]
+          },
+          {
+            "id": "chat",
+            "title": "3. Open the chat terminal",
+            "description": "Press **Ctrl+Alt+;** — a terminal opens. Type a message, press Enter. Incoming messages scroll in like command output.\n[Open Chat](command:rezo.openChat)",
+            "media": {
+              "markdown": "media/walkthrough/chat.md"
+            },
+            "completionEvents": [
+              "onCommand:rezo.openChat"
+            ]
+          },
+          {
+            "id": "pin",
+            "title": "4. Pin a note to a line",
+            "description": "Select some code and press **Ctrl+Alt+Shift+P**. Your note shows up as a review thread on that line for everyone in the room.\n[Set Display Name](command:rezo.setDisplayName)",
+            "media": {
+              "markdown": "media/walkthrough/pin.md"
+            },
+            "completionEvents": [
+              "onCommand:rezo.pinSelection",
+              "onCommand:rezo.setDisplayName"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",

@@ -4,6 +4,7 @@ import {
   roomExists,
   deleteRoom,
   getRoomLastActivity,
+  firebasePut,
 } from './firebase';
 import { StatusBarManager } from './statusBar';
 import {
@@ -84,6 +85,10 @@ export async function createRoom(
 
   try {
     await setLastActivity(roomId);
+    // Store the creator's expiry so the server-side cleanup job knows when
+    // this room is abandoned. -1 means "never".
+    const expiryMs = getRoomExpiryMs();
+    await firebasePut(`rooms/${roomId}/ttl`, Number.isFinite(expiryMs) ? expiryMs : -1);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     vscode.window.showErrorMessage(`REZO: Failed to create room — ${msg}`);
@@ -92,7 +97,7 @@ export async function createRoom(
   }
 
   await storeRoomKey(context, roomId, key);
-  await context.workspaceState.update(KEY_ACTIVE_ROOM, roomId);
+  await context.globalState.update(KEY_ACTIVE_ROOM, roomId);
   statusBar.update(roomId);
 
   const invite = makeInvite(roomId, key);
@@ -162,7 +167,7 @@ export async function joinRoom(
   }
 
   await storeRoomKey(context, roomId, key);
-  await context.workspaceState.update(KEY_ACTIVE_ROOM, roomId);
+  await context.globalState.update(KEY_ACTIVE_ROOM, roomId);
   statusBar.update(roomId);
   outputChannel.appendLine(`[REZO] Joined ${displayCode(roomId)}`);
   vscode.window.showInformationMessage(`REZO: Joined ${displayCode(roomId)}`);
@@ -178,7 +183,7 @@ export async function leaveRoom(
   outputChannel: vscode.OutputChannel
 ): Promise<void> {
   const current = getActiveRoom(context);
-  await context.workspaceState.update(KEY_ACTIVE_ROOM, undefined);
+  await context.globalState.update(KEY_ACTIVE_ROOM, undefined);
   if (current) {
     // Forget the key so a lost/stolen machine can't decrypt scrollback.
     await context.secrets.delete(SECRET_ROOM_KEY_PREFIX + current);
@@ -236,5 +241,25 @@ export async function checkAndCleanupRoom(
 export function getActiveRoom(
   context: vscode.ExtensionContext
 ): string | undefined {
-  return context.workspaceState.get<string>(KEY_ACTIVE_ROOM);
+  return context.globalState.get<string>(KEY_ACTIVE_ROOM);
+}
+
+// ---------------------------------------------------------------------------
+// One-time migration
+// ---------------------------------------------------------------------------
+
+/**
+ * Before 3.1 the active room, display name, and message cache lived in
+ * workspaceState, so opening another folder dropped you out of your room.
+ * They now live in globalState; copy any old per-folder values across once.
+ */
+export async function migrateWorkspaceState(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  for (const key of [KEY_ACTIVE_ROOM, 'rezo.displayName', 'rezo.messageCache']) {
+    const old = context.workspaceState.get(key);
+    if (old !== undefined && context.globalState.get(key) === undefined) {
+      await context.globalState.update(key, old);
+    }
+  }
 }

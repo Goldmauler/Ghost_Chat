@@ -74,7 +74,7 @@ const MAX_CACHE_SIZE = 50;
  * Return the stored display name, or fall back to the OS username.
  */
 export function getSenderName(context: vscode.ExtensionContext): string {
-  const stored = context.workspaceState.get<string>(KEY_DISPLAY_NAME);
+  const stored = context.globalState.get<string>(KEY_DISPLAY_NAME);
   if (stored && stored.trim().length > 0) {
     return stored.trim();
   }
@@ -88,7 +88,7 @@ export async function setDisplayName(
   context: vscode.ExtensionContext,
   name: string
 ): Promise<void> {
-  await context.workspaceState.update(KEY_DISPLAY_NAME, name.trim());
+  await context.globalState.update(KEY_DISPLAY_NAME, name.trim());
 }
 
 // ---------------------------------------------------------------------------
@@ -192,16 +192,16 @@ export async function cacheMessages(
   roomCode: string,
   messages: GhostMessage[]
 ): Promise<void> {
-  const cache = context.workspaceState.get<CacheStore>(KEY_MESSAGE_CACHE) ?? {};
+  const cache = context.globalState.get<CacheStore>(KEY_MESSAGE_CACHE) ?? {};
   cache[roomCode] = messages.slice(-MAX_CACHE_SIZE);
-  await context.workspaceState.update(KEY_MESSAGE_CACHE, cache);
+  await context.globalState.update(KEY_MESSAGE_CACHE, cache);
 }
 
 export function getCachedMessages(
   context: vscode.ExtensionContext,
   roomCode: string
 ): GhostMessage[] {
-  const cache = context.workspaceState.get<CacheStore>(KEY_MESSAGE_CACHE) ?? {};
+  const cache = context.globalState.get<CacheStore>(KEY_MESSAGE_CACHE) ?? {};
   return cache[roomCode] ?? [];
 }
 
