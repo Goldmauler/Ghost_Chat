@@ -8,11 +8,27 @@ on:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
     steps:
+      # The security rules block listing /rooms, so cleanup needs a service-account
+      # key. Without the secret there is nothing useful to run: say so as a visible
+      # warning instead of failing every hour. A key that is present but wrong
+      # still fails the next step loudly.
+      - name: Check for service-account secret
+        id: creds
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Room cleanup skipped::FIREBASE_SERVICE_ACCOUNT secret is not set, so expired rooms are NOT being deleted. Add it under Settings > Secrets and variables > Actions."
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.creds.outputs.present == 'true'
       - uses: actions/setup-node@v4
+        if: steps.creds.outputs.present == 'true'
         with:
           node-version: 20
       - run: node scripts/cleanup-rooms.js
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        if: steps.creds.outputs.present == 'true'
